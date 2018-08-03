@@ -1,18 +1,20 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+// reading a text file
+#include <iostream>
+#include <fstream>
+#include <string>
+using namespace std;
 
-int main(int argc, char *argv[]){
-	char filename[20];
-	strcpy(filename,argv[1]);
-
-	FILE * file;
-	file = fopen( filename , "r");
-
-	if (file){
-		printf("got the file called: %s \n",filename);
+int main () {
+	string line;
+	ifstream myfile ("eil22.txt");
+	if (myfile.is_open()){
+		while ( getline (myfile,line) ){
+			cout << line << '\n';
+		}
+		myfile.close();
 	}
+
+	else cout << "Unable to open file"; 
 
 	return 0;
 }
-
