@@ -33,16 +33,21 @@ int main(int argc, char* argv[]){
     int count = 0 ;
     while (std::getline(capacity_data, token, ' '))
     {
-        //trucks_capacity[count] = std::stoi(token);
-        //count ++;
 
         if (token.length() > 0){
-            cout << token + "\n";
+
+            trucks_capacity[count] = std::stoi(token);
+            count += 1;
         }
+
 
     }
 
+    std::getline(infile, line);
+    std::getline(infile, line);
 
-    
+
+
+
     return 0;
 }
