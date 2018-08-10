@@ -27,8 +27,17 @@ int main(int argc, char* argv[]){
     std::string capacity_string = line;
 
     std::stringstream capacity_data(capacity_string);
-    capacity_data >> trucks_capacity[0] >> trucks_capacity[1] >> trucks_capacity[2];
-    cout << trucks_capacity[0] << trucks_capacity[1] << trucks_capacity[2];
+
+    string token;
+
+    int count = 0 ;
+    while (std::getline(capacity_data, token, ' '))
+    {
+        trucks_capacity[count] =    std::stoi(token);
+        count ++;
+    }
+
+
 
     /*while (std::getline(infile, line)){
     }*/
