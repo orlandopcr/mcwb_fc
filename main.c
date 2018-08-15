@@ -45,33 +45,43 @@ int get_node(int *domain,int n_nodes, int previous_node, int nodes_info[][5]){
 	int minimun_distance_node;
 	float distance = 9999999999;
 	float obtained_distance;
-	for (int i = 0; i < n_nodes; ++i)
+	for (int i = 1; i < n_nodes; ++i)
 	{
 		if (domain[i]==0)
 		{	
-			if (previous_node != i)
+			if (previous_node + 1 != i)
 			{
-				obtained_distance = get_distance(previous_node, i , nodes_info, n_nodes);
+				
+				obtained_distance = get_distance(previous_node + 1, i , nodes_info, n_nodes);
 				if (obtained_distance < distance)
 				{
 					distance = obtained_distance;
 					minimun_distance_node = i;
+
 				}
 			}
-			
-			
 		}
 	}
-	if (distance = 9999999999)
-	{
+
+	if(distance == 0){
 		return -1;
 	}
-	else if(distance = 0){
-		return -1;
-	}
+
 	else{
-		return minimun_distance_node;
+		if (distance <= 0){
+			return -1;
+		}
+
+		else{
+			if(distance > 99999999){
+				return -1;
+			}
+			else{
+				return minimun_distance_node;
+			}
+		}
 	}
+	
 }
 
 int check_forward(int *ptr_capacity,int *ptr_domain,int nodes_info[][5],int actual_truck, int **route_matrix, int node_to_instanciate, int n_nodes){
@@ -86,6 +96,9 @@ int check_forward(int *ptr_capacity,int *ptr_domain,int nodes_info[][5],int actu
 	return 1;
 }
 
+int reset_domain(int *ptr_domain, int **route_matrix, int n_nodes){
+	printf("get here\n");
+}
 
 int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[],int nodes_info[][5], int n_trucks, int n_milk_types, int n_nodes ){
 	
@@ -104,25 +117,45 @@ int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[]
 	int *ptr_domain = &domain[0];
 	int *ptr_capacity = &trucks_capacity[0];
 
+
+
 	route_matrix = (int **)malloc (n_nodes*sizeof(int *));
 	for (int i=0;i<n_nodes;i++)
 	route_matrix[i] = (int *) malloc (n_nodes*sizeof(int));
 	int actual_truck = 0;
 	int previous_node = 0;
+
 	while(count_trucks !=0){
-		
 
 		int node_to_instanciate = get_node(ptr_domain, n_nodes, previous_node, nodes_info);
 
 		if(node_to_instanciate != -1){
 
-
+			
+			
 			ptr_domain[node_to_instanciate]=1;
+
+			/*for (int i = 0; i < n_nodes; ++i)
+			{
+				printf("%d", ptr_domain[i]);
+			}
+			printf("\n");
+
+			printf("capacity 1: %d ", ptr_capacity[0]);
+			printf("capacity 2: %d ", ptr_capacity[1]);
+			printf("capacity 3: %d ", ptr_capacity[2]);*/
+
+			present(route_matrix,n_nodes,n_nodes);
+
+
 			int checked = check_forward(ptr_capacity,ptr_domain,nodes_info, actual_truck, route_matrix,node_to_instanciate, n_nodes);
 			route_matrix[previous_node][node_to_instanciate] = 1;
 			previous_node = node_to_instanciate;
 		}
 		else{
+			printf("finish truck\n");
+
+			reset_domain(ptr_domain, route_matrix, n_nodes);
 			count_trucks = count_trucks - 1;
 			actual_truck = actual_truck + 1;
 		}
