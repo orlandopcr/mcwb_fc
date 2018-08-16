@@ -97,7 +97,46 @@ int check_forward(int *ptr_capacity,int *ptr_domain,int nodes_info[][5],int actu
 }
 
 int reset_domain(int *ptr_domain, int **route_matrix, int n_nodes){
-	printf("get here\n");
+	int sum_instances;
+	int check_reseted = 0;
+	for (int i = 0; i < n_nodes; ++i)
+	{
+		for (int j = 0; j < n_nodes; ++j)
+		{
+			sum_instances = sum_instances + route_matrix[i][j];
+		}
+
+		if (sum_instances == 0)
+		{
+			ptr_domain[i] = 0;
+			check_reseted = 1;
+		}
+		sum_instances = 0;
+	}
+	return check_reseted;
+}
+
+
+void clean_matrix(int **route_matrix, int n_nodes){
+	int flag_find_it = 0;
+	int return_matrix[n_nodes][n_nodes]; 
+	for (int i = 0; i < n_nodes; ++i)
+	{
+		for (int j = 0; j < n_nodes; ++j)
+		{
+			if (route_matrix[i][j] != 0)
+			{
+				if (flag_find_it == 0)
+				{
+					flag_find_it = 1;
+				}
+				else{
+					route_matrix[i][j] = 0;
+				}
+			}
+		}
+		flag_find_it = 0;
+	}
 }
 
 int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[],int nodes_info[][5], int n_trucks, int n_milk_types, int n_nodes ){
@@ -124,50 +163,34 @@ int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[]
 	route_matrix[i] = (int *) malloc (n_nodes*sizeof(int));
 	int actual_truck = 0;
 	int previous_node = 0;
+	int reseted;
 
 	while(count_trucks !=0){
 
 		int node_to_instanciate = get_node(ptr_domain, n_nodes, previous_node, nodes_info);
-
+		
 		if(node_to_instanciate != -1){
-
-			
 			
 			ptr_domain[node_to_instanciate]=1;
 
-			/*for (int i = 0; i < n_nodes; ++i)
-			{
-				printf("%d", ptr_domain[i]);
-			}
-			printf("\n");
-
-			printf("capacity 1: %d ", ptr_capacity[0]);
-			printf("capacity 2: %d ", ptr_capacity[1]);
-			printf("capacity 3: %d ", ptr_capacity[2]);*/
-
-			present(route_matrix,n_nodes,n_nodes);
-
-
 			int checked = check_forward(ptr_capacity,ptr_domain,nodes_info, actual_truck, route_matrix,node_to_instanciate, n_nodes);
-			route_matrix[previous_node][node_to_instanciate] = 1;
+			route_matrix[previous_node][node_to_instanciate] = actual_truck +1 ;
 			previous_node = node_to_instanciate;
 		}
 		else{
-			printf("finish truck\n");
-
-			reset_domain(ptr_domain, route_matrix, n_nodes);
+			
+			int reseted = reset_domain(ptr_domain, route_matrix, n_nodes);
 			count_trucks = count_trucks - 1;
 			actual_truck = actual_truck + 1;
 		}
 	}
 
+	clean_matrix(route_matrix, n_nodes);
+	present(route_matrix,n_nodes,n_nodes);
+
 	return -1;
 
 }
-
-
-
-
 
 int main(int argc, char* argv[]){
 
