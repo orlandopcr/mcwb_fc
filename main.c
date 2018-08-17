@@ -29,6 +29,45 @@ int get_distance(int node_from , int node_to, int nodes_info[][5], int n_nodes){
 	return distance;
 }
 
+float get_benefit(int node, int nodes_info[][5], int n_nodes , float milk_values[]){
+	int value_from, amount, milk_type;
+	int benefit = 0;
+	for (int i = 0; i < n_nodes; ++i)
+	{
+		if (nodes_info[i][0] == node)
+		{
+			
+			amount = nodes_info[i][4];
+			milk_type = nodes_info[i][3]; //65,66,67,45 es planta
+		}
+	}
+
+	if(milk_type == 65){
+		benefit = amount * milk_values[0];
+	}
+	else if(milk_type == 66){
+		benefit = amount * milk_values[1];
+	}
+	else if(milk_type == 67){
+		benefit = amount * milk_values[2];
+	}
+	return benefit;
+}
+
+int get_milk_amount(int node, int nodes_info[][5], int n_nodes){
+	int amount= 0;
+	for (int i = 0; i < n_nodes; ++i)
+	{
+		if (nodes_info[i][0] == node)
+		{
+			
+			amount = nodes_info[i][4];
+		}
+	}
+	
+	return amount;
+}
+
 void present(int **p,int nf,int nc)
 {
   int i=0,j=0;
@@ -45,13 +84,12 @@ int get_node(int *domain,int n_nodes, int previous_node, int nodes_info[][5]){
 	int minimun_distance_node;
 	float distance = 9999999999;
 	float obtained_distance;
-	for (int i = 1; i < n_nodes; ++i)
+	for (int i = 0; i < n_nodes; ++i)
 	{
 		if (domain[i]==0)
 		{	
 			if (previous_node + 1 != i)
 			{
-				
 				obtained_distance = get_distance(previous_node + 1, i , nodes_info, n_nodes);
 				if (obtained_distance < distance)
 				{
@@ -91,6 +129,27 @@ int check_forward(int *ptr_capacity,int *ptr_domain,int nodes_info[][5],int actu
 		if (ptr_capacity[actual_truck] - nodes_info[i][4] < 0)
 		{
 			ptr_domain[i] = 1;
+		}
+		if (actual_truck == 0 )
+		{
+			if (nodes_info[i][3] !=65)
+			{
+				ptr_domain[i] = 1;
+			}
+		}
+		if (actual_truck == 1 )
+		{
+			if (nodes_info[i][3] !=66)
+			{
+				ptr_domain[i] = 1;
+			}
+		}
+		if (actual_truck == 2 )
+		{
+			if (nodes_info[i][3] !=67)
+			{
+				ptr_domain[i] = 1;
+			}
 		}
 	}
 	return 1;
@@ -139,8 +198,9 @@ void clean_matrix(int **route_matrix, int n_nodes){
 	}
 }
 
-int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[],int nodes_info[][5], int n_trucks, int n_milk_types, int n_nodes ){
-	
+
+int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[],int nodes_info[][5], int n_trucks, int n_milk_types, int n_nodes , char argv[]){
+
 	int **route_matrix;
 	int domain[n_nodes];
 	int count_trucks = n_trucks;
@@ -164,6 +224,17 @@ int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[]
 	int actual_truck = 0;
 	int previous_node = 0;
 	int reseted;
+	int count_truck_matriz_position = 0;
+	int trucks_matrix[n_trucks][n_nodes]; 
+
+	for (int i = 0; i < n_trucks; ++i)
+	{
+		for (int j = 0; j < n_nodes; ++j)
+		{
+			trucks_matrix[i][j]=-1;
+		}
+		
+	}
 
 	while(count_trucks !=0){
 
@@ -172,14 +243,17 @@ int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[]
 		if(node_to_instanciate != -1){
 			
 			ptr_domain[node_to_instanciate]=1;
+			trucks_matrix[actual_truck][count_truck_matriz_position] = node_to_instanciate;
+			count_truck_matriz_position ++;
 
 			int checked = check_forward(ptr_capacity,ptr_domain,nodes_info, actual_truck, route_matrix,node_to_instanciate, n_nodes);
-			route_matrix[previous_node][node_to_instanciate] = actual_truck +1 ;
+			route_matrix[previous_node][node_to_instanciate] = actual_truck + 1 ;
 			previous_node = node_to_instanciate;
 		}
 		else{
 			
 			int reseted = reset_domain(ptr_domain, route_matrix, n_nodes);
+			count_truck_matriz_position = 0;
 			count_trucks = count_trucks - 1;
 			actual_truck = actual_truck + 1;
 		}
@@ -187,7 +261,107 @@ int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[]
 
 	clean_matrix(route_matrix, n_nodes);
 	present(route_matrix,n_nodes,n_nodes);
+	
+	for (int i = 0; i < n_trucks; ++i)
+	{
+		for (int j = 0; j < n_nodes; ++j)
+		{
+			if (trucks_matrix[i][j]== -1)
+			{
+				trucks_matrix[i][j]=0;
+			}
+		}
+	}
 
+	
+	int viewing_truck = 0;
+	int sum_cost = 0;
+	int pre_node, post_node, cost, milk_amount , sum_milk_amount;
+	float benefit;
+	float sum_benefit = 0;
+
+	int cost_vector[n_trucks];
+	float benefit_vector[n_trucks];
+	int amount_vector[n_trucks];
+	sum_milk_amount = 0;
+	while(viewing_truck < n_trucks){
+
+		for (int i = 0; i < n_nodes-1; ++i)
+		{
+			if(trucks_matrix[viewing_truck][i]!=0){
+				pre_node = trucks_matrix[viewing_truck][i];
+				post_node = trucks_matrix[viewing_truck][i+1];
+				cost = get_distance(pre_node , post_node, nodes_info, n_nodes);
+
+				benefit = get_benefit(trucks_matrix[viewing_truck][i], nodes_info, n_nodes , milk_values);
+				milk_amount = get_milk_amount(trucks_matrix[viewing_truck][i], nodes_info, n_nodes);
+				sum_cost = sum_cost + cost;
+				sum_benefit = sum_benefit + benefit;
+
+				sum_milk_amount = sum_milk_amount + milk_amount;
+
+
+			}
+		}
+		cost_vector[viewing_truck] = sum_cost;
+		benefit_vector[viewing_truck] = sum_benefit;
+		amount_vector[viewing_truck] = sum_milk_amount;
+		viewing_truck ++;
+		sum_cost=0;
+		sum_benefit = 0;
+		sum_milk_amount = 0;
+	}
+
+	/*for (int i = 0; i < n_trucks; ++i)
+	{
+		printf("cost: %d benefit: %f  amount: %d\n", cost_vector[i], benefit_vector[i], amount_vector[i]);
+	}*/
+	FILE *file_out;
+   	file_out= fopen("last_run.out", "w");
+
+   	printf("name : %s\n", argv);
+
+   	int total_benefit=0;
+   	int total_cost = 0;
+	
+	for (int i = 0; i < n_trucks; ++i)
+	{
+		total_benefit = total_benefit + benefit_vector[i];
+		total_cost = total_cost + cost_vector[i];
+	}
+
+	fprintf(file_out,"%d %d %d \n", total_benefit - total_cost , total_cost, total_benefit);
+
+	for (int i = 0; i < n_trucks; ++i)
+	{
+		fprintf(file_out,"0 -");
+		for (int j = 0; j < n_nodes; ++j)
+		{
+			if (trucks_matrix[i][j]!=0)
+			{
+				fprintf(file_out,"  %d -", trucks_matrix[i][j]);
+			}
+			
+		}
+		fprintf(file_out," 0 ");
+		fprintf(file_out, "%d ", cost_vector[i]);
+		if (i == 0)
+		{
+			fprintf(file_out, "%d A", amount_vector[i]);
+		}
+		if (i == 1)
+		{
+			fprintf(file_out, "%d B", amount_vector[i]);
+		}
+		if (i == 2)
+		{
+			fprintf(file_out, "%d C", amount_vector[i]);
+		}
+		
+		fprintf(file_out,"\n");
+	}
+
+    fclose(file_out);
 	return -1;
 
 }
@@ -202,6 +376,8 @@ int main(int argc, char* argv[]){
    	int n_nodes;
    	char word[1024];
    	char copy_word;
+
+
 
    	fscanf(file, "%d", &n_trucks);
    	int trucks_capacity[n_trucks];
@@ -241,7 +417,7 @@ int main(int argc, char* argv[]){
 	   			fscanf(file, " %1s", word);
 	   			type_char = word[0];  //will code and store type as ascii 
 	   			nodes_info[i][j] = type_char; 
-	   			
+
 	   		}
 	   		else{
 	   			fscanf(file, " %1023s", word);
@@ -251,7 +427,8 @@ int main(int argc, char* argv[]){
 	   	}
 	}
 
-	get_the_route(trucks_capacity, milk_quotas , milk_values, nodes_info, n_trucks, n_milk_types, n_nodes );
+
+	get_the_route(trucks_capacity, milk_quotas , milk_values, nodes_info, n_trucks, n_milk_types, n_nodes , argv[1]);
 
 	return 0;
 }
