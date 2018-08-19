@@ -58,7 +58,7 @@ int get_milk_amount(int node, int nodes_info[][5], int n_nodes){
 	int amount= 0;
 	for (int i = 0; i < n_nodes; ++i)
 	{
-		if (nodes_info[i][0] == node)
+		if (nodes_info[i][0] == node +1)
 		{
 			
 			amount = nodes_info[i][4];
@@ -80,46 +80,111 @@ void present(int **p,int nf,int nc)
   }
 }
 
-int get_node(int *domain,int n_nodes, int previous_node, int nodes_info[][5]){
-	int minimun_distance_node;
-	float distance = 9999999999;
-	float obtained_distance;
-	for (int i = 0; i < n_nodes; ++i)
+int get_node(int *domain,int n_nodes, int previous_node, int nodes_info[][5], int actual_truck, int heuristic){
+	
+	if (heuristic ==1)
 	{
-		if (domain[i]==0)
-		{	
-			if (previous_node + 1 != i)
-			{
-				obtained_distance = get_distance(previous_node + 1, i , nodes_info, n_nodes);
-				if (obtained_distance < distance)
+		int minimun_distance_node;
+		float distance = 9999999999;
+		float obtained_distance;
+		for (int i = 0; i < n_nodes; ++i)
+		{
+			if (domain[i]==0)
+			{	
+				if (previous_node  != i)
 				{
-					distance = obtained_distance;
-					minimun_distance_node = i;
+					obtained_distance = get_distance(previous_node + 1, i , nodes_info, n_nodes);
+					
+					if (actual_truck == 0)
+					{
+						if (obtained_distance < distance && nodes_info[i][3] == 65)
+						{
+							
+							distance = obtained_distance;
+							minimun_distance_node = i;
 
+						}
+					}
+					if (actual_truck == 1)
+					{
+						if (obtained_distance < distance && nodes_info[i][3] == 66)
+						{
+							distance = obtained_distance;
+							minimun_distance_node = i;
+
+						}
+					}
+					if (actual_truck == 2)
+					{
+						if (obtained_distance < distance && nodes_info[i][3] == 67)
+						{
+							distance = obtained_distance;
+							minimun_distance_node = i;
+
+						}
+					}
 				}
 			}
 		}
-	}
 
-	if(distance == 0){
-		return -1;
-	}
-
-	else{
-		if (distance <= 0){
+		if(distance == 0){
 			return -1;
 		}
 
 		else{
-			if(distance > 99999999){
+			if (distance <= 0){
 				return -1;
 			}
+
 			else{
-				return minimun_distance_node;
+				if(distance > 99999999){
+					return -1;
+				}
+				else{
+					return minimun_distance_node;
+				}
 			}
 		}
 	}
-	
+	else
+	{
+
+		for (int i = 0; i < n_nodes; ++i)
+		{
+			if (domain[i]==0){
+				if (previous_node  != i)
+				{
+
+					if (actual_truck == 0)
+					{
+						if (nodes_info[i][3] == 65)
+						{
+							return i;
+						}
+					}
+
+					if (actual_truck == 1)
+					{
+						if (nodes_info[i][3] == 66)
+						{
+							return i;
+						}
+					}
+					if (actual_truck == 2)
+					{
+						if (nodes_info[i][3] == 67)
+						{
+							return i;
+						}
+					}
+
+				}
+			}
+			
+		}
+		return -1;
+	}
+
 }
 
 int check_forward(int *ptr_capacity,int *ptr_domain,int nodes_info[][5],int actual_truck, int **route_matrix, int node_to_instanciate, int n_nodes){
@@ -129,27 +194,6 @@ int check_forward(int *ptr_capacity,int *ptr_domain,int nodes_info[][5],int actu
 		if (ptr_capacity[actual_truck] - nodes_info[i][4] < 0)
 		{
 			ptr_domain[i] = 1;
-		}
-		if (actual_truck == 0 )
-		{
-			if (nodes_info[i][3] !=65)
-			{
-				ptr_domain[i] = 1;
-			}
-		}
-		if (actual_truck == 1 )
-		{
-			if (nodes_info[i][3] !=66)
-			{
-				ptr_domain[i] = 1;
-			}
-		}
-		if (actual_truck == 2 )
-		{
-			if (nodes_info[i][3] !=67)
-			{
-				ptr_domain[i] = 1;
-			}
 		}
 	}
 	return 1;
@@ -199,7 +243,7 @@ void clean_matrix(int **route_matrix, int n_nodes){
 }
 
 
-int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[],int nodes_info[][5], int n_trucks, int n_milk_types, int n_nodes , char argv[]){
+int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[],int nodes_info[][5], int n_trucks, int n_milk_types, int n_nodes , char argv[], int heuristic, int order[], FILE *file_out){
 
 	int **route_matrix;
 	int domain[n_nodes];
@@ -213,8 +257,16 @@ int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[]
 		domain[i]=0;
 	}
 
+
+
 	int *ptr_domain = &domain[0];
 	int *ptr_capacity = &trucks_capacity[0];
+
+
+	for (int i = 0; i < n_nodes; ++i)
+	{
+		ptr_domain[i] = 0;
+	}
 
 
 
@@ -227,6 +279,16 @@ int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[]
 	int count_truck_matriz_position = 0;
 	int trucks_matrix[n_trucks][n_nodes]; 
 
+	for (int i = 0; i < n_nodes; ++i)
+	{
+		for (int j = 0; j < n_nodes; ++j)
+		{
+			
+			route_matrix[i][j]  = 0;
+
+		}
+	}
+
 	for (int i = 0; i < n_trucks; ++i)
 	{
 		for (int j = 0; j < n_nodes; ++j)
@@ -238,8 +300,8 @@ int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[]
 
 	while(count_trucks !=0){
 
-		int node_to_instanciate = get_node(ptr_domain, n_nodes, previous_node, nodes_info);
-		
+		int node_to_instanciate = get_node(ptr_domain, n_nodes, previous_node, nodes_info, actual_truck, heuristic);
+
 		if(node_to_instanciate != -1){
 			
 			ptr_domain[node_to_instanciate]=1;
@@ -260,7 +322,7 @@ int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[]
 	}
 
 	clean_matrix(route_matrix, n_nodes);
-	present(route_matrix,n_nodes,n_nodes);
+	
 	
 	for (int i = 0; i < n_trucks; ++i)
 	{
@@ -312,14 +374,6 @@ int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[]
 		sum_milk_amount = 0;
 	}
 
-	/*for (int i = 0; i < n_trucks; ++i)
-	{
-		printf("cost: %d benefit: %f  amount: %d\n", cost_vector[i], benefit_vector[i], amount_vector[i]);
-	}*/
-	FILE *file_out;
-   	file_out= fopen("last_run.out", "w");
-
-   	printf("name : %s\n", argv);
 
    	int total_benefit=0;
    	int total_cost = 0;
@@ -329,6 +383,9 @@ int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[]
 		total_benefit = total_benefit + benefit_vector[i];
 		total_cost = total_cost + cost_vector[i];
 	}
+
+
+
 
 	fprintf(file_out,"%d %d %d \n", total_benefit - total_cost , total_cost, total_benefit);
 
@@ -360,8 +417,10 @@ int get_the_route(int trucks_capacity[], int milk_quotas[] , float milk_values[]
 		
 		fprintf(file_out,"\n");
 	}
+	fprintf(file_out, "______________________________________________________________heuristic: %d trucks_capacity: %d - %d - %d \n", heuristic, order[0],order[1],order[2]);
+    
 
-    fclose(file_out);
+
 	return -1;
 
 }
@@ -371,16 +430,28 @@ int main(int argc, char* argv[]){
 	FILE *file;
 	int get_data;
    	file = fopen(argv[1], "r");
+
+   	FILE *file_out;
+   	file_out= fopen(strcat(argv[1],".out"), "w");
+
    	int n_trucks;
    	int n_milk_types;
    	int n_nodes;
    	char word[1024];
    	char copy_word;
 
+   	int heuristic= 0;
 
+   	if (argv[2])
+   	{
+   		heuristic = 1;
+   	}
+   	
 
    	fscanf(file, "%d", &n_trucks);
    	int trucks_capacity[n_trucks];
+   	int trucks_capacity_order[n_trucks];
+   	int order[n_trucks];
 
    	for (int i = 0; i < n_trucks; ++i)
    	{
@@ -407,6 +478,7 @@ int main(int argc, char* argv[]){
 	fscanf(file, "%d", &n_nodes);
    	int nodes_info[n_nodes][5];
    	char type_char;
+   
 
    	for (int i = 0; i < n_nodes; ++i)
 	{
@@ -427,8 +499,26 @@ int main(int argc, char* argv[]){
 	   	}
 	}
 
+	for (int i = 0; i < n_trucks; ++i)
+	{
+		for (int j = 0; j < n_trucks; ++j)
+		{
+			for (int k = 0; k < n_trucks; ++k)
+			{
+				if(i!=j && i!=k && j!=k){
+					trucks_capacity_order[0] = trucks_capacity[i];
+					trucks_capacity_order[1] = trucks_capacity[j];
+					trucks_capacity_order[2] = trucks_capacity[k];
+					order[0] = i ;
+					order[1] = j ;
+					order[2] = k ;
+					get_the_route(trucks_capacity_order, milk_quotas , milk_values, nodes_info, n_trucks, n_milk_types, n_nodes , argv[1] , heuristic, order, file_out);
+				}
+			}
+		}
+	}
 
-	get_the_route(trucks_capacity, milk_quotas , milk_values, nodes_info, n_trucks, n_milk_types, n_nodes , argv[1]);
+	fclose(file_out);
 
 	return 0;
 }
